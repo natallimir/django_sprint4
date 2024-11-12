@@ -44,6 +44,7 @@ class Location(models.Model):
 
 class Post(models.Model):
     title = models.CharField(max_length=256, verbose_name='Заголовок')
+    image = models.ImageField('Фото', upload_to='posts_images', blank=True)
     text = models.TextField(verbose_name='Текст')
     pub_date = models.DateTimeField(
         verbose_name='Дата и время публикации',
@@ -81,3 +82,17 @@ class Post(models.Model):
     class Meta:
         verbose_name = 'публикация'
         verbose_name_plural = 'Публикации'
+
+
+class Comment(models.Model):
+    text = models.TextField('Текст комментария')
+    post = models.ForeignKey(
+        Post,
+        on_delete=models.CASCADE,
+        related_name="comment"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    author = models.ForeignKey(User, on_delete=models.CASCADE)
+
+    class Meta:
+        ordering = ('-created_at',)
