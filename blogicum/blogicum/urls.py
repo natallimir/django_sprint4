@@ -37,7 +37,7 @@ urlpatterns = [
 ]
 
 
-handler404 = 'core.views.page_not_found'
-handler500 = 'core.views.not_supported'
+handler404 = 'pages.views.page_not_found'
+handler500 = 'pages.views.not_supported'
 
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
