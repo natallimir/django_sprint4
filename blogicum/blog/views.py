@@ -4,7 +4,7 @@ from django.views.generic import (
 )
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import HttpRequest
-from django.urls import reverse, reverse_lazy
+from django.urls import reverse
 from django.db.models import Count
 from django.contrib.auth import get_user_model
 from django.utils import timezone
