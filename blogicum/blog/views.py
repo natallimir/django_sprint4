@@ -3,7 +3,7 @@ from django.views.generic import (
     CreateView, UpdateView, DeleteView, DetailView, ListView
 )
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.http import HttpRequest
+from django.http import Http404, HttpRequest
 from django.urls import reverse
 from django.db.models import Count
 from django.contrib.auth import get_user_model
@@ -37,7 +37,7 @@ class ProfileListView(ListView):
         return context
 
 
-class ProfileUpdateView(UpdateView, LoginRequiredMixin):
+class ProfileUpdateView(LoginRequiredMixin, UpdateView):
     model = User
     form_class = UserForm
     template_name = "blog/user.html"
@@ -95,11 +95,18 @@ class PostDetailView(DetailView):
     template_name = 'blog/detail.html'
 
     def get_object(self, queryset=None):
-        return get_object_or_404(
-            self.model.objects.select_related('location', 'author', 'category')
-            .filter(pub_date__lte=timezone.now(),
-                    is_published=True,
-                    category__is_published=True), pk=self.kwargs['id'])
+        post = get_object_or_404(
+            self.model.objects.select_related(
+                'location', 'author', 'category'
+            ),
+            pk=self.kwargs['id']
+        )
+
+        if not post.is_published or not post.category.is_published:
+            if post.author != self.request.user:
+                raise Http404("Пост или его категория не опубликованы.")
+
+        return post
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -108,7 +115,7 @@ class PostDetailView(DetailView):
         return context
 
 
-class PostCreateView(CreateView, LoginRequiredMixin):
+class PostCreateView(LoginRequiredMixin, CreateView):
     model = Post
     form_class = PostForm
     template_name = 'blog/create.html'
@@ -121,7 +128,7 @@ class PostCreateView(CreateView, LoginRequiredMixin):
         return reverse("blog:profile", args=[self.request.user])
 
 
-class PostUpdateView(UpdateView, LoginRequiredMixin):
+class PostUpdateView(LoginRequiredMixin, UpdateView):
     model = Post
     form_class = PostForm
     template_name = 'blog/create.html'
@@ -137,7 +144,7 @@ class PostUpdateView(UpdateView, LoginRequiredMixin):
                        kwargs={'id': self.kwargs['post_id']})
 
 
-class PostDeleteView(DeleteView, LoginRequiredMixin):
+class PostDeleteView(LoginRequiredMixin, DeleteView):
     model = Post
     template_name = 'blog/create.html'
     pk_url_kwarg = 'post_id'
@@ -178,7 +185,7 @@ class CommentCreateView(LoginRequiredMixin, CreateView):
         )
 
 
-class CommentUpdateView(UpdateView, LoginRequiredMixin):
+class CommentUpdateView(LoginRequiredMixin, UpdateView):
     model = Comment
     form_class = CommentForm
     template_name = 'blog/comment.html'
@@ -198,7 +205,7 @@ class CommentUpdateView(UpdateView, LoginRequiredMixin):
                        kwargs={'id': self.kwargs['post_id']})
 
 
-class CommentDeleteView(DeleteView, LoginRequiredMixin):
+class CommentDeleteView(LoginRequiredMixin, DeleteView):
     model = Comment
     template_name = 'blog/comment.html'
     pk_url_kwarg = "comment_id"
